@@ -1,72 +1,21 @@
-import { AsnProp, AsnPropTypes, AsnType, AsnTypeTypes, AsnArray, AsnConvert, AsnSerializer, AsnOctetStringConverter } from "@peculiar/asn1-schema";
-import { DigestAlgorithmIdentifier, Attribute, SignedAttributes, ContentInfo, SignedData, SigningTime } from "@peculiar/asn1-cms";
+import { AsnProp, AsnPropTypes, AsnType, AsnTypeTypes, AsnArray, AsnConvert, AsnSerializer, AsnOctetStringConverter, OctetString } from "@peculiar/asn1-schema";
+import { DigestAlgorithmIdentifier, Attribute, SignedAttributes, ContentInfo, SignedData, SigningTime, id_signedData, id_data, id_contentType, SignerInfo, EncapsulatedContent, DigestAlgorithmIdentifiers, SignerIdentifier } from "@peculiar/asn1-cms";
+import { id_sha256 } from '@peculiar/asn1-rsa'
+import { AlgorithmIdentifier } from "@peculiar/asn1-x509";
 import { expect } from "chai";
 import "mocha";
 
 import * as assert from "assert";
 import { Convert } from "pvtsutils";
 import { LDSSecurityObject, LDSSecurityObjectVersion, DataGroupHash, DataGroupNumber, LdsSecurityObjectIdentifier, id_ldsSecurityObject, AttributeSet } from "../src/sod";
+import { sign } from "crypto";
 
 context("SOD", () => {
 
-  it("serialize SignedAttributes", () => {
-
-    // create a random message digest
-    const messageDigest = new Uint8Array(32);
-    for (let i = 0; i < messageDigest.length; i++) {
-      messageDigest[i] = Math.floor(Math.random() * 256);
-    }
-
-    const contentType = new Attribute({
-      attrType : '1.2.840.113549.1.9.3', // id_contentType
-      attrValues : [
-        AsnConvert.serialize(new LdsSecurityObjectIdentifier(id_ldsSecurityObject))
-      ]
-    })
-
-    const signingTime = new Attribute({
-      attrType : '1.2.840.113549.1.9.5', // id_signingTime
-      attrValues: [
-          AsnConvert.serialize(new SigningTime(new Date()))
-        ]
-    })
-  
-    const _messageDigest = new Attribute({
-      attrType : '1.2.840.113549.1.9.4', // id_messageDigest
-      attrValues : [
-        AsnConvert.serialize(AsnOctetStringConverter.toASN(new Uint8Array(messageDigest)))
-      ]
-    })
-  
-    const mySignedAttributes = new AttributeSet();
-    mySignedAttributes.push(contentType);
-    mySignedAttributes.push(signingTime);
-    mySignedAttributes.push(_messageDigest);
-
-    const s = Buffer.from(AsnSerializer.serialize(mySignedAttributes)).toString("hex");
-    console.log(s);
-  });
-
-  it("serialize LDS Security Object", () => {
-    const ldsSecurityObject = new LDSSecurityObject();
-    ldsSecurityObject.version = LDSSecurityObjectVersion.v0;
-    ldsSecurityObject.hashAlgorithm = new DigestAlgorithmIdentifier({
-      algorithm: "1.2.840.113549.1.1.11"
-    });
-
-    ldsSecurityObject.dataGroupHashValues = [
-      new DataGroupHash({
-        dataGroupNumber: DataGroupNumber.dataGroup1,
-        dataGroupHashValue: new ArrayBuffer(0)
-      })
-    ];
-    const s = Buffer.from(AsnSerializer.serialize(ldsSecurityObject)).toString("hex");
-    console.log(s);
-    assert.strictEqual(s, "3019020100300b06092a864886f70d01010b300730050201010400");
-  });
-
   it("parse SOD", () => {
-    // from https://github.com/ZeroPass/pymrtd/blob/master/tests/ef/sod_test.py
+    // Test vector taken from German BSI TR-03105-5 ReferenceDataSet
+    // https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen/TechnischeRichtlinien/TR03105/BSI_TR-03105-5_ReferenceDataSet_zip.html
+    // EF_SOD.bin
     // stripped
     const pem = 
       "MIIHhgYJKoZIhvcNAQcCoIIHdzCCB3MCAQMxDzANBglghkgBZQMEAgEFADCB6QYG" +
@@ -116,11 +65,10 @@ context("SOD", () => {
     const signedData = AsnConvert.parse(contentInfo.content, SignedData);
     assert.strictEqual(!!signedData, true);
     
-    console.log(signedData.encapContentInfo.eContent);
     const securityObject = AsnConvert.parse(signedData.encapContentInfo.eContent.single, LDSSecurityObject);
     assert.strictEqual(!!securityObject, true);
     assert.strictEqual(securityObject.version, LDSSecurityObjectVersion.v0);
-    assert.strictEqual(securityObject.hashAlgorithm.algorithm, "2.16.840.1.101.3.4.2.1");
+    assert.strictEqual(securityObject.hashAlgorithm.algorithm, id_sha256);
     assert.strictEqual(securityObject.dataGroupHashValues.length, 5);
     assert.strictEqual(securityObject.dataGroupHashValues[0].dataGroupNumber, DataGroupNumber.dataGroup1);
     assert.strictEqual(securityObject.dataGroupHashValues[0].dataGroupHashValue.byteLength, 32);
@@ -132,6 +80,60 @@ context("SOD", () => {
     assert.strictEqual(securityObject.dataGroupHashValues[3].dataGroupHashValue.byteLength, 32);
     assert.strictEqual(securityObject.dataGroupHashValues[4].dataGroupNumber, DataGroupNumber.dataGroup4);
     assert.strictEqual(securityObject.dataGroupHashValues[4].dataGroupHashValue.byteLength, 32);
+  });
+
+  it("serialize LDS Security Object", () => {
+    const ldsSecurityObject = new LDSSecurityObject();
+    ldsSecurityObject.version = LDSSecurityObjectVersion.v0;
+    ldsSecurityObject.hashAlgorithm = new DigestAlgorithmIdentifier({
+      algorithm: "1.2.840.113549.1.1.11"
+    });
+
+    ldsSecurityObject.dataGroupHashValues = [
+      new DataGroupHash({
+        dataGroupNumber: DataGroupNumber.dataGroup1,
+        dataGroupHashValue: new ArrayBuffer(0)
+      })
+    ];
+    const s = Buffer.from(AsnSerializer.serialize(ldsSecurityObject)).toString("hex");
+    assert.strictEqual(s,"3019020100300b06092a864886f70d01010b300730050201010400");
+  });
+
+  it("serialize SignedAttributes", () => {
+
+    // create a random message digest
+    const messageDigest = new Uint8Array(32);
+    for (let i = 0; i < messageDigest.length; i++) {
+      messageDigest[i] = Math.floor(Math.random() * 256);
+    }
+
+    const contentType = new Attribute({
+      attrType : id_contentType,
+      attrValues : [
+        AsnConvert.serialize(new LdsSecurityObjectIdentifier(id_ldsSecurityObject))
+      ]
+    })
+
+    const signingTime = new Attribute({
+      attrType : '1.2.840.113549.1.9.5', // id_signingTime
+      attrValues: [
+          AsnConvert.serialize(new SigningTime(new Date()))
+        ]
+    })
+
+    const _messageDigest = new Attribute({
+      attrType : '1.2.840.113549.1.9.4', // id_messageDigest
+      attrValues : [
+        AsnConvert.serialize(AsnOctetStringConverter.toASN(new Uint8Array(messageDigest)))
+      ]
+    })
+
+    const mySignedAttributes = new AttributeSet();
+    mySignedAttributes.push(contentType);
+    mySignedAttributes.push(signingTime);
+    mySignedAttributes.push(_messageDigest);
+
+    const s = Buffer.from(AsnSerializer.serialize(mySignedAttributes)).toString("hex");
   });
 
 });
