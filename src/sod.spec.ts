@@ -1,22 +1,21 @@
-import { AsnProp, AsnPropTypes, AsnType, AsnTypeTypes, AsnArray, AsnConvert, AsnSerializer, AsnOctetStringConverter, OctetString } from "@peculiar/asn1-schema";
-import { DigestAlgorithmIdentifier, Attribute, SignedAttributes, ContentInfo, SignedData, SigningTime, id_signedData, id_data, id_contentType, SignerInfo, EncapsulatedContent, DigestAlgorithmIdentifiers, SignerIdentifier } from "@peculiar/asn1-cms";
-import { id_sha256 } from '@peculiar/asn1-rsa'
-import { AlgorithmIdentifier } from "@peculiar/asn1-x509";
-import { expect } from "chai";
 import "mocha";
-
 import * as assert from "assert";
 import { Convert } from "pvtsutils";
-import { LDSSecurityObject, LDSSecurityObjectVersion, DataGroupHash, DataGroupNumber, LdsSecurityObjectIdentifier, id_ldsSecurityObject, AttributeSet } from "../src/sod";
-import { sign } from "crypto";
+import { AsnConvert, AsnSerializer, AsnOctetStringConverter } from "@peculiar/asn1-schema";
+import { DigestAlgorithmIdentifier, Attribute, ContentInfo, SignedData, SigningTime, id_contentType} from "@peculiar/asn1-cms";
+import { id_sha256 } from '@peculiar/asn1-rsa'
+import { AlgorithmIdentifier } from "@peculiar/asn1-x509";
+import { LDSSecurityObject, LDSSecurityObjectVersion, DataGroupHash, DataGroupNumber, 
+  LdsSecurityObjectIdentifier, id_ldsSecurityObject, AttributeSet } from "../src/sod";
 
 context("SOD", () => {
 
-  it("parse SOD", () => {
+  it("parse SOD.EF", () => {
     // Test vector taken from German BSI TR-03105-5 ReferenceDataSet
     // https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen/TechnischeRichtlinien/TR03105/BSI_TR-03105-5_ReferenceDataSet_zip.html
     // EF_SOD.bin
-    // stripped
+    // stripped with
+    // openssl asn1parse -inform der -in EF_SOD.bin -strparse 4 -noout -out pkcs7
     const pem = 
       "MIIHhgYJKoZIhvcNAQcCoIIHdzCCB3MCAQMxDzANBglghkgBZQMEAgEFADCB6QYG" +
       "Z4EIAQEBoIHeBIHbMIHYAgEAMA0GCWCGSAFlAwQCAQUAMIHDMCUCAQEEIEFwyoef" +
@@ -117,7 +116,7 @@ context("SOD", () => {
     const signingTime = new Attribute({
       attrType : '1.2.840.113549.1.9.5', // id_signingTime
       attrValues: [
-          AsnConvert.serialize(new SigningTime(new Date()))
+          AsnConvert.serialize(new SigningTime(new Date(2024, 5, 1)))
         ]
     })
 
@@ -134,6 +133,8 @@ context("SOD", () => {
     mySignedAttributes.push(_messageDigest);
 
     const s = Buffer.from(AsnSerializer.serialize(mySignedAttributes)).toString("hex");
+    assert.strictEqual(s.slice(0, 100),
+      "315b300a31080606678108010101301c06092a864886f70d010905310f170d3234303533313232303030305a302f06092a86");
   });
 
 });
