@@ -5,8 +5,8 @@ import { AsnConvert, AsnSerializer, AsnOctetStringConverter } from "@peculiar/as
 import { DigestAlgorithmIdentifier, Attribute, ContentInfo, SignedData, SigningTime, id_contentType} from "@peculiar/asn1-cms";
 import { id_sha256 } from '@peculiar/asn1-rsa'
 import { AlgorithmIdentifier } from "@peculiar/asn1-x509";
-import { LDSSecurityObject, LDSSecurityObjectVersion, DataGroupHash, DataGroupNumber, 
-  LdsSecurityObjectIdentifier, id_ldsSecurityObject, AttributeSet } from "../src/sod";
+import { LDSSecurityObject, DataGroupHash, LdsSecurityObjectIdentifier, id_ldsSecurityObject, AttributeSet } from "../src/sod";
+import { LDSSecurityObjectVersion, DataGroupNumber } from "../src/types";
 
 context("SOD", () => {
 

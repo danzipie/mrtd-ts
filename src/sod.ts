@@ -1,5 +1,6 @@
 import { AsnProp, AsnPropTypes, AsnType, AsnTypeTypes, AsnArray } from "@peculiar/asn1-schema";
-import { DigestAlgorithmIdentifier, Attribute, SignedAttributes } from "@peculiar/asn1-cms";
+import { DigestAlgorithmIdentifier, Attribute } from "@peculiar/asn1-cms";
+import { DataGroupNumber, LDSSecurityObjectVersion } from "./types";
 
 export const id_ldsSecurityObject = '2.23.136.1.1.1';
 
@@ -73,28 +74,4 @@ export class LDSSecurityObject {
     public constructor(params: Partial<LDSSecurityObject> = {}) {
       Object.assign(this, params);
     }
-}
-
-export enum LDSSecurityObjectVersion {
-    v0 = 0,
-    v1 = 1,
-}
-
-export enum DataGroupNumber {
-    dataGroup1 = 1,
-    dataGroup2 = 2,
-    dataGroup3 = 3,
-    dataGroup4 = 4,
-    dataGroup5 = 5,
-    dataGroup6 = 6,
-    dataGroup7 = 7,
-    dataGroup8 = 8,
-    dataGroup9 = 9,
-    dataGroup10 = 10,    
-    dataGroup11 = 11,
-    dataGroup12 = 12,
-    dataGroup13 = 13,
-    dataGroup14 = 14,
-    dataGroup15 = 15,
-    dataGroup16 = 16,
 }
