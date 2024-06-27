@@ -15,7 +15,6 @@ export class AttributeSet extends AsnArray<Attribute> {
   constructor(items?: Attribute[]) {
     super(items);
 
-    // Set the prototype explicitly.
     Object.setPrototypeOf(this, AttributeSet.prototype);
   }
 
@@ -56,10 +55,9 @@ export class DataGroupHash {
 
 /**
  * LDSSecurityObject ::= SEQUENCE {
- * version LDSSecurityObjectVersion,
- * hashAlgorithm DigestAlgorithmIdentifier,
- * dataGroupHashValues SEQUENCE SIZE (2..ub-DataGroups) OF
- * DataGroupHash}
+ *  version LDSSecurityObjectVersion,
+ *  hashAlgorithm DigestAlgorithmIdentifier,
+ *  dataGroupHashValues SEQUENCE SIZE (2..ub-DataGroups) OF DataGroupHash}
  */
 export class LDSSecurityObject {
     @AsnProp({ type: AsnPropTypes.Integer })
