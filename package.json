@@ -1,7 +1,7 @@
 {
   "name": "@danzipie/mrtd-ts",
   "version": "1.0.0",
-  "private": true,
+  "private": false,
   "main": "dist/bundle.js",
   "license": "MIT",
   "scripts": {
