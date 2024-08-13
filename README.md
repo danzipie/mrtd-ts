@@ -1,5 +1,12 @@
 # mrtd-ts
 
+## Installation
+
+```
+yarn
+yarn test
+```
+
 ## Usage
 
 Parse the EF.SOD element.
